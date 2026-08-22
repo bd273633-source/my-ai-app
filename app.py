@@ -23,16 +23,17 @@ if user_input:
             try:
                 encoded_prompt = urllib.parse.quote(user_input)
                 url = f"https://text.pollinations.ai/{encoded_prompt}"
-                
-                res = requests.get(url)
-                if res.status_code == 200:
+
+                headers = {"User-Agent": "Mozilla/5.0"}
+                res = requests.get(url, headers=headers, timeout=20)
+
+                if res.status_code == 200 and res.text.strip():
                     bot_reply = res.text
                 else:
-                    bot_reply = "Aapka message mil gaya! Phir se try karein."
+                    bot_reply = f"Error {res.status_code}: {res.text[:200]}"
             except Exception as e:
                 bot_reply = f"Error: {e}"
-            
+
             st.markdown(bot_reply)
 
     st.session_state.messages.append({"role": "assistant", "content": bot_reply})
-                

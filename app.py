@@ -1,66 +1,42 @@
 import streamlit as st
-import requests
-import warnings
-from duckduckgo_search import DDGS
+import google.generativeai as genai
 
-warnings.filterwarnings('ignore')
+# Hardcoded Gemini API key
+API_KEY = "AQ.Ab8RN6KQONl95-rueM0lMZ3bcr-Dw7Lmi8LwrmwjGf8P7fYVUQ"
 
-API_KEY = "AQ.Ab8RN6L5BQyXbCbWwQKEpYJ2ykaTMUZ5yuKfRx2wICKs3XnPPw"
+# Configure GenAI with the API key and model
+genai.configure(api_key=API_KEY)
+model = genai.GenerativeModel("gemini-1.5-flash")
 
-def search_net(query):
-    results_text = ""
+def get_response(prompt):
     try:
-        with DDGS() as ddgs:
-            results = list(ddgs.text(query, max_results=3))
-            for r in results:
-                results_text += f"\nTitle: {r['title']}\nSnippet: {r['body']}\n"
-        return results_text
+        response = model.generate_content(prompt)
+        return response.text
     except Exception as e:
-        return f"Error during web search: {e}"
+        return f"Error: {e}"
 
-def ask_blackbox(prompt, search_needed=True):
-    if search_needed:
-        search_results = search_net(prompt)
-        full_prompt = f"Live Search Results:\n{search_results}\n\nUser Question: {prompt}"
-    else:
-        full_prompt = prompt
+# Streamlit App
+st.title("Gemini AI Chat")
 
-    api_url = "https://www.blackbox.ai/api/chat"
-    headers = {"Content-Type": "application/json"}
-    data = {
-        "messages": [{"role": "user", "content": full_prompt}],
-        "id": API_KEY
-    }
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-    try:
-        response = requests.post(api_url, headers=headers, json=data)
-        if response.status_code == 200:
-            return response.text
-        else:
-            return f"API Failed ({response.status_code}): {response.text}"
-    except Exception as e:
-        return f"Request Error: {e}"
+# Display chat history
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-st.set_page_config(page_title="My Personal AI", page_icon="🤖")
-st.title("My Personal AI")
-
-if 'messages' not in st.session_state:
-    st.session_state['messages'] = []
-
-for msg in st.session_state['messages']:
-    with st.chat_message(msg['role']):
-        st.markdown(msg['content'])
-
-user_input = st.chat_input("Your message:")
+# User input
+user_input = st.chat_input("Ask a question or give a prompt")
 
 if user_input:
-    st.session_state['messages'].append({'role': 'user', 'content': user_input})
+    # Display user message
+    st.session_state.messages.append({"role": "user", "content": user_input})
     with st.chat_message("user"):
         st.markdown(user_input)
 
+    # Get and display assistant response
+    response_text = get_response(user_input)
+    st.session_state.messages.append({"role": "assistant", "content": response_text})
     with st.chat_message("assistant"):
-        with st.spinner("Thinking..."):
-            response = ask_blackbox(user_input, search_needed=True)
-            st.markdown(response)
-            
-    st.session_state['messages'].append({'role': 'assistant', 'content': response})
+        st.markdown(response_text)

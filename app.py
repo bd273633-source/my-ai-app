@@ -21,7 +21,7 @@ if user_input:
         with st.spinner("Soch raha hoon..."):
             try:
                 api_key = st.secrets["GEMINI_API_KEY"]
-                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={api_key}"
+                url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key={api_key}"
 
                 system_instruction = (
                     "Tum ek friendly AI ho jo Hinglish (Hindi + English mix) mein "
